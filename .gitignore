@@ -1,0 +1,30 @@
+# Servicio de referencia: es un repositorio aparte, se clona por separado
+DedicatedServer-Api/
+
+# Guía del laboratorio (PDF y transcripción): material del curso, se conserva solo localmente
+Laboratorio_ServiciosMultimedia_ServidorDedicado*
+
+# Unity
+unity-client/[Ll]ibrary/
+unity-client/[Tt]emp/
+unity-client/[Oo]bj/
+unity-client/[Ll]ogs/
+unity-client/[Uu]ser[Ss]ettings/
+unity-client/[Bb]uild/
+unity-client/[Bb]uilds/
+unity-client/[Mm]emoryCaptures/
+unity-client/*.csproj
+unity-client/*.sln
+unity-client/*.slnx
+unity-client/.vs/
+unity-client/.vscode/
+unity-client/.idea/
+
+# Python (servicio de eventos)
+__pycache__/
+*.pyc
+.venv/
+
+# Sistema operativo
+Thumbs.db
+.DS_Store

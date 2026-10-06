@@ -1,0 +1,6 @@
+services:
+  events-service:
+    build: .
+    ports:
+      - "5006:8000"
+    restart: unless-stopped
