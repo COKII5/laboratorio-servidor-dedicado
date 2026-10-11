@@ -4,7 +4,7 @@ Sincronización de un juego en Unity a través de un servicio REST, primero repl
 
 | Carpeta | Contenido |
 |---|---|
-| `unity-client/` | Proyecto Unity 6 (6000.0.82f1): cliente de la Parte 1 y, más adelante, de la Parte 2 |
+| `unity-client/` | Proyecto Unity 6 (6000.0.82f1): clientes de la Parte 1 y de la Parte 2 (escenario Carreras) |
 | `events-service/` | Servicio de eventos de la Parte 2 (FastAPI + Docker) |
 
 ## Requisitos
@@ -61,7 +61,7 @@ Los identificadores de partida y de jugador, la URL del servicio y Δt se config
 Las dos instancias arrancan con la misma escena, así que ambas empiezan como `p1`. **En una de ellas se pulsa `Tab`** para que pase a ser `p2`. Cada jugador mantiene el mismo color en las dos ventanas: `p1` azul y `p2` naranja.
 
 - **Multiplayer Play Mode** (ya instalado): *Window → Multiplayer → Multiplayer Play Mode*, activar un *Player 2* y dar Play.
-- **Compilación + editor**: menú **Laboratorio → Compilar para Windows** (genera `unity-client/Builds/Windows/ServidorDedicado.exe`). La compilación acepta argumentos, así que no hace falta pulsar `Tab`:
+- **Compilación + editor**: menú **Laboratorio → Compilar Parte 1 para Windows** (genera `unity-client/Builds/Parte1/ServidorDedicado.exe`). La compilación acepta argumentos, así que no hace falta pulsar `Tab`:
 
   ```bash
   ServidorDedicado.exe -playerId p2 -remoteId p1 -gameId partida1 -dt 200
@@ -135,3 +135,56 @@ python -m venv .venv
 .venv/Scripts/python -m pip install -r requirements-dev.txt   # en Linux/macOS: .venv/bin/python
 .venv/Scripts/python -m pytest
 ```
+
+## 5. Cliente Unity (Parte 2 · Carreras)
+
+Escena `Assets/Scenes/Parte2_Eventos.unity`. Si hace falta regenerarla: **Laboratorio → Regenerar escena Parte 2**. Para compilarla: **Laboratorio → Compilar Parte 2 para Windows**, que genera `unity-client/Builds/Parte2/ServidorDedicado.exe`. Acepta los mismos argumentos que la Parte 1, más `-experiment events`. **Ojo:** la partida por defecto de la Parte 2 es `carrera1` (en la Parte 1 es `partida1`); las dos instancias deben usar la misma, por ejemplo `ServidorDedicado.exe -playerId p2 -remoteId p1 -gameId carrera1 -dt 200`.
+
+La pista tiene 6 checkpoints en óvalo; el 0 es la meta. Cada auto empieza en la meta y debe pasar los checkpoints en orden.
+
+| Evento | Cuándo se envía | Payload | Reacción en la otra instancia |
+|---|---|---|---|
+| `BoostUsed` | Al pulsar Espacio (dura 1,5 s y se recarga en 3 s) | `{x, y, z}` | El auto remoto pulsa; suma al contador de boosts |
+| `CheckpointPassed` | Al pasar el siguiente checkpoint | `{checkpoint, lap, x, y, z}` | El auto remoto avanza a ese checkpoint, que destella con su color |
+| `LapCompleted` | Al cruzar la meta después de los demás | `{lap, lap_time}` | Suma al contador de vueltas y muestra el tiempo |
+
+**El auto remoto no recibe posiciones**: solo se mueve cuando llega un `CheckpointPassed`. Es la diferencia con la Parte 1.
+
+| Componente | Función |
+|---|---|
+| `EventSyncClient` (objeto `Red`) | Envía los eventos y consulta los nuevos cada Δt con `since` = último `seq` recibido |
+| `RaceController` (auto local) | Boost, checkpoints y vueltas; envía cada acción como evento |
+| `RemoteRacerView` (auto remoto) | Reacciona a los eventos del otro jugador |
+| `Track` (objeto `Pista`) | Checkpoints y su resaltado |
+| `EventExperiment` | Experimento C |
+| `Part2Controls` | Teclas, panel y registro de los últimos eventos recibidos |
+
+Cómo garantiza el cliente que cada evento se ejecute una sola vez:
+
+- Al entrar a la partida pide solo el último `seq`, para no reproducir el historial.
+- En cada consulta envía `since` = último `seq` recibido, e ignora cualquier evento con `seq` menor o igual al último procesado.
+- Ignora sus propios eventos, porque ya los aplicó al producirlos.
+- Envía con una cola: un POST a la vez y en orden. Si falla por red o el servidor responde 5xx, reintenta con el mismo `event_id`, así el servicio no registra el evento dos veces. Si la respuesta es 4xx, descarta el evento y lo registra como error.
+- Si el servicio responde un `last_seq` menor que el que el cliente ya tenía, asume que el servicio se reinició y vuelve a pedir desde 0.
+
+### Teclas (Parte 2)
+
+| Tecla | Acción |
+|---|---|
+| WASD / flechas | Mover el auto local |
+| Espacio | Boost |
+| `1` `2` `3` | Δt = 50 / 200 / 1000 ms |
+| `Tab` | Intercambiar jugador local y remoto |
+| `C` | Enviar la ráfaga del experimento C |
+| `H` | Mostrar u ocultar el panel |
+
+### Experimento C: propagación de eventos
+
+1. En la instancia **observadora**, elegir Δt con `1`, `2` o `3`.
+2. En la **otra** instancia, pulsar `C`. Envía 20 eventos `BoostUsed` seguidos, uno cada 20 ms, con payload `{index, burst_id}`: su número dentro de la ráfaga y un identificador de ráfaga.
+3. La observadora registra cuántos recibió, si llegaron en orden, si alguno se repitió y en cuántas consultas llegaron.
+
+Se repite para cada Δt.
+
+- `expC_observador_<jugador>.csv`: Δt, recibidos, faltantes, en orden, repetidos y consultas con eventos. Se cuenta sobre lo que entrega el servicio, antes de que el cliente descarte repetidos.
+- `expC_publicador_<jugador>.csv`: separación real entre envíos y tiempo hasta que el servicio registró los 20.
