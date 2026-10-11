@@ -1,8 +1,9 @@
 # Servicio de referencia: es un repositorio aparte, se clona por separado
 DedicatedServer-Api/
 
-# Guía del laboratorio (PDF y transcripción): material del curso, se conserva solo localmente
+# Guía y tabla de penalizaciones: material del curso, se conservan solo localmente
 Laboratorio_ServiciosMultimedia_ServidorDedicado*
+Penalizaciones.xlsx
 
 # Unity
 unity-client/[Ll]ibrary/

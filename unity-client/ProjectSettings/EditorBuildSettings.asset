@@ -8,5 +8,8 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Parte1_Estado.unity
     guid: 35d070ec0d1aed94195e9302cf1ab8ad
+  - enabled: 1
+    path: Assets/Scenes/Parte2_Eventos.unity
+    guid: 5e3a38ab040c988458d4071d6b2ef56a
   m_configObjects: {}
   m_UseUCBPForAssetBundles: 0

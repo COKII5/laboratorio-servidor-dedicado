@@ -2,10 +2,6 @@ using System;
 
 namespace Lab.Common
 {
-    /// <summary>
-    /// Lee argumentos de la forma "-nombre valor" al lanzar una compilación. Permite abrir
-    /// dos copias del mismo ejecutable como jugadores distintos sin recompilar.
-    /// </summary>
     public static class CommandLineArgs
     {
         public static bool TryGet(string name, out string value)

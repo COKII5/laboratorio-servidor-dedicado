@@ -33,6 +33,7 @@
     "com.unity.modules.wind": "1.0.0",
     "com.unity.modules.xr": "1.0.0",
     "com.unity.multiplayer.center": "1.0.0",
-    "com.unity.multiplayer.playmode": "1.6.3"
+    "com.unity.multiplayer.playmode": "1.6.3",
+    "com.unity.nuget.newtonsoft-json": "3.2.2"
   }
 }

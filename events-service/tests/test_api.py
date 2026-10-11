@@ -45,8 +45,8 @@ def test_get_returns_events_after_since_in_order(client):
 
     body = client.get("/games/g1/events", params={"since": 2}).json()
 
-    assert [e["seq"] for e in body["events"]] == [3, 4, 5]
-    assert [e["type"] for e in body["events"]] == ["E2", "E3", "E4"]
+    assert [event["seq"] for event in body["events"]] == [3, 4, 5]
+    assert [event["type"] for event in body["events"]] == ["E2", "E3", "E4"]
     assert body["last_seq"] == 5
 
 
@@ -54,7 +54,7 @@ def test_get_without_since_returns_every_event(client):
     post(client)
     post(client)
 
-    assert [e["seq"] for e in client.get("/games/g1/events").json()["events"]] == [1, 2]
+    assert [event["seq"] for event in client.get("/games/g1/events").json()["events"]] == [1, 2]
 
 
 def test_get_unknown_game_is_empty_not_404(client):
@@ -92,13 +92,12 @@ def test_same_event_id_in_another_game_is_a_new_event(client):
 
 
 def test_polling_with_since_receives_every_event_once_in_order(client):
-    """Experimento C sin tiempos reales: entre dos consultas llegan varios eventos y ninguno se pierde."""
     received, since = [], 0
     for published_between_polls in [3, 0, 5, 1, 11]:
         for _ in range(published_between_polls):
             post(client)
         body = client.get("/games/g1/events", params={"since": since}).json()
-        received += [e["seq"] for e in body["events"]]
+        received += [event["seq"] for event in body["events"]]
         since = body["last_seq"]
 
     assert received == list(range(1, 21))

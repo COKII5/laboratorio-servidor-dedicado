@@ -38,6 +38,22 @@ La escena tiene un objeto `Red` con estos componentes:
 | `SamplingExperiment` | Experimento B |
 | `Part1Controls` | Atajos de teclado y panel en pantalla |
 
+### Organización de los scripts
+
+```
+Assets/Scripts/
+  Common/    Código compartido por las dos partes
+    Network/   PollingClient: configuración, argumentos de línea de comandos, bucle cada Δt, GET y POST
+    UI/        SyncClientControls (teclas y panel comunes), InfoPanel, RequestRateMeter
+    Gameplay/  LocalPlayerMover, PlayerColors
+    Utils/     CommandLineArgs, ResultsWriter, RealtimeClock
+  Part1/     Network/ (PositionSyncClient, PositionDto) · Experiments/ (A y B) · UI/ (Part1Controls)
+  Part2/     Network/ (EventSyncClient, DTO) · Race/ (carrera y eventos) · Experiments/ (C) · UI/ (Part2Controls)
+Assets/Editor/LabSetup.cs   Menú Laboratorio: genera las escenas y compila
+```
+
+`PositionSyncClient` y `EventSyncClient` heredan de `PollingClient`; `Part1Controls` y `Part2Controls`, de `SyncClientControls`. El JSON se lee y se escribe con Newtonsoft Json (paquete `com.unity.nuget.newtonsoft-json`), que permite nombres de C# en PascalCase y nombres JSON fijados por el servicio (`posX`, `player_id`).
+
 Los identificadores de partida y de jugador, la URL del servicio y Δt se configuran en el Inspector de `PositionSyncClient`. El proyecto ya trae activadas *Allow downloads over HTTP* y *Run In Background*. Si hiciera falta, el menú **Laboratorio → Configurar proyecto y regenerar escena Parte 1** las vuelve a aplicar y genera la escena de nuevo.
 
 ### Ejecutar dos instancias
@@ -51,7 +67,7 @@ Las dos instancias arrancan con la misma escena, así que ambas empiezan como `p
   ServidorDedicado.exe -playerId p2 -remoteId p1 -gameId partida1 -dt 200
   ```
 
-  Otros argumentos: `-url http://...` y `-experiment latency|burst` (inicia un experimento 2 s después de arrancar).
+  Otros argumentos: `-url http://...` y `-experiment latency|burst` (inicia un experimento 2 s después de arrancar). Si la URL no es válida, la partida está vacía o `-dt` no es un entero positivo, se avisa en la consola y se usa el valor por defecto.
 
 ### Teclas
 

@@ -4,18 +4,18 @@ from app.models import EventIn
 from app.store import EventStore
 
 
-def run_concurrently(threads: int, work) -> None:
-    barrier = threading.Barrier(threads)
+def run_concurrently(thread_count: int, work) -> None:
+    barrier = threading.Barrier(thread_count)
 
     def worker():
         barrier.wait()  # todos arrancan a la vez para forzar la competencia
         work()
 
-    pool = [threading.Thread(target=worker) for _ in range(threads)]
-    for t in pool:
-        t.start()
-    for t in pool:
-        t.join()
+    pool = [threading.Thread(target=worker) for _ in range(thread_count)]
+    for thread in pool:
+        thread.start()
+    for thread in pool:
+        thread.join()
 
 
 def test_concurrent_appends_get_unique_consecutive_seq():

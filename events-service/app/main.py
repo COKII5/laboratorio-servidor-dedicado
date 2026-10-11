@@ -19,9 +19,8 @@ store = EventStore()
     response_model=PostResult,
     responses={200: {"model": PostResult, "description": "El event_id ya estaba registrado; se devuelve su seq original"}},
 )
-def post_event(game_id: str, data: EventIn, response: Response) -> PostResult:
-    """Registra un evento y devuelve el seq asignado. Si faltan datos, responde 422."""
-    event, duplicate = store.append(game_id, data)
+def post_event(game_id: str, incoming: EventIn, response: Response) -> PostResult:
+    event, duplicate = store.append(game_id, incoming)
     if duplicate:
         response.status_code = 200
     return PostResult(seq=event.seq, timestamp=event.timestamp, duplicate=duplicate)
@@ -29,10 +28,7 @@ def post_event(game_id: str, data: EventIn, response: Response) -> PostResult:
 
 @app.get("/games/{game_id}/events", response_model=EventsPage, response_model_exclude_none=True)
 def get_events(game_id: str, since: int = Query(0, ge=0, description="Último seq que el cliente ya recibió")) -> EventsPage:
-    """
-    Devuelve en orden los eventos con seq mayor que since y el último seq registrado.
-    Una partida sin eventos no es un error: responde una lista vacía y last_seq = 0.
-    """
+    """Una partida sin eventos no es un error: responde una lista vacía y last_seq = 0."""
     events, last_seq = store.since(game_id, since)
     return EventsPage(events=events, last_seq=last_seq)
 
